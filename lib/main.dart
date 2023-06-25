@@ -76,22 +76,34 @@ class ListModel<T> {
   final Duration duration;
 
   ListModel(this.itemBuilder,
-      {this.duration = const Duration(milliseconds: 100)});
+      {this.duration = const Duration(milliseconds: 200)});
 
   AnimatedListState get _animatedList => listKey.currentState!;
+
+  bool get isNotEmpty => items.isNotEmpty;
+  bool get isEmpty => items.isEmpty;
+  int get length => items.length;
+
+  operator [](int i) => items[i];
 
   void removeAt(int index) {
     final removedItem = items.removeAt(index);
     if (removedItem != null) {
       _animatedList.removeItem(index,
           (context, animation) => itemBuilder(context, removedItem, animation),
-          duration: duration);
+          duration: this.duration);
+    }
+  }
+
+  void removeAll() {
+    while (items.isNotEmpty) {
+      removeAt(0);
     }
   }
 
   void insert(int index, T item) {
     items.insert(index, item);
-    _animatedList.insertItem(index);
+    _animatedList.insertItem(index, duration: this.duration);
   }
 }
 
@@ -100,10 +112,8 @@ class _MyHomePageState extends State<MyHomePage>
   var stopwatch = Stopwatch();
   var durationText = "";
 
-  var savedDurations = <SavedDurationEntry>[];
-  final GlobalKey<AnimatedListState> savedDurationsListKey =
-      GlobalKey<AnimatedListState>();
-
+  static const Duration animationDuration = Duration(milliseconds: 200);
+  late ListModel<SavedDurationEntry> savedDurations;
   AnimationController? _animationController;
   Animation? _animation;
 
@@ -132,10 +142,15 @@ class _MyHomePageState extends State<MyHomePage>
       updateDuration();
     });
 
-    _animationController = AnimationController(
-        duration: const Duration(milliseconds: 200), vsync: this);
-    _animation = IntTween(begin: 0, end: 1).animate(_animationController!);
+    _animationController =
+        AnimationController(duration: animationDuration, vsync: this);
+    var animCurve =
+        CurvedAnimation(parent: _animationController!, curve: Curves.bounceIn);
+    _animation = IntTween(begin: 0, end: 1).animate(animCurve);
     _animation!.addListener(() => setState(() {}));
+
+    savedDurations = ListModel<SavedDurationEntry>(_buildSavedDurationItem,
+        duration: animationDuration * 0.75);
   }
 
   int getCurrentState() {
@@ -176,14 +191,7 @@ class _MyHomePageState extends State<MyHomePage>
                 _animationController!.reverse();
               }
               stopwatch.reset();
-              for (var s in savedDurations) {
-                savedDurationsListKey.currentState!.removeItem(
-                    0,
-                    (context, animation) =>
-                        _buildSavedDurationItem(context, s, animation),
-                    duration: const Duration(milliseconds: 100));
-              }
-              savedDurations.clear();
+              savedDurations.removeAll();
               updateDuration();
             },
             style: ElevatedButton.styleFrom(
@@ -219,8 +227,6 @@ class _MyHomePageState extends State<MyHomePage>
                     0,
                     SavedDurationEntry(savedDurations.length,
                         _printDuration(stopwatch.elapsed)));
-                savedDurationsListKey.currentState!
-                    .insertItem(0, duration: const Duration(milliseconds: 200));
               });
             },
             style: ElevatedButton.styleFrom(
@@ -252,22 +258,30 @@ class _MyHomePageState extends State<MyHomePage>
   }
 
   Widget savedDurationsToRow(int key, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        if (key != -1)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Text(
-              '${key + 1}. ',
-              style: Theme.of(context).textTheme.bodyLarge,
+    return Center(
+      child: SizedBox(
+        width: 200,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Text(
+                '${key + 1}. ',
+                style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                      color: Theme.of(context).colorScheme.secondary,
+                    ),
+              ),
             ),
-          ),
-        Text(
-          value,
-          style: Theme.of(context).textTheme.bodyLarge,
+            Text(
+              value,
+              style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
@@ -275,11 +289,9 @@ class _MyHomePageState extends State<MyHomePage>
       BuildContext context, SavedDurationEntry s, Animation<double> animation) {
     return SizeTransition(
       sizeFactor: animation,
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          child: savedDurationsToRow(s.index, s.time),
-        ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        child: savedDurationsToRow(s.index, s.time),
       ),
     );
   }
@@ -287,8 +299,6 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   Widget build(BuildContext context) {
     currentState = getCurrentState();
-
-    print(_animationController!.value.toString());
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -316,14 +326,50 @@ class _MyHomePageState extends State<MyHomePage>
               ),
             ),
             Expanded(
-              flex: (_animationController!.value * 100).toInt(),
-              child: AnimatedList(
-                shrinkWrap: true,
-                key: savedDurationsListKey,
-                itemBuilder: (context, index, animation) {
-                  var item = savedDurations[index];
-                  return _buildSavedDurationItem(context, item, animation);
-                },
+              flex: (_animationController!.value * 200).toInt(),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      if (_animationController!.value > 0)
+                        SizedBox(
+                          width: 200,
+                          child: Column(
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Lap',
+                                    style:
+                                        Theme.of(context).textTheme.bodyMedium,
+                                  ),
+                                  Text(
+                                    'Time',
+                                    style:
+                                        Theme.of(context).textTheme.bodyMedium,
+                                  ),
+                                ],
+                              ),
+                              const Divider(),
+                            ],
+                          ),
+                        ),
+                      AnimatedList(
+                        physics: const NeverScrollableScrollPhysics(),
+                        shrinkWrap: true,
+                        key: savedDurations.listKey,
+                        itemBuilder: (context, index, animation) {
+                          var item = savedDurations[index];
+                          return _buildSavedDurationItem(
+                              context, item, animation);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
             Padding(
