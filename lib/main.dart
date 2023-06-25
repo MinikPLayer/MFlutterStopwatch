@@ -332,11 +332,13 @@ class _MyHomePageState extends State<MyHomePage>
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (_animationController!.value > 0)
+                    if (_animationController!.value > 0.5)
                       SizedBox(
                         width: 200,
                         child: Column(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -355,7 +357,8 @@ class _MyHomePageState extends State<MyHomePage>
                           ],
                         ),
                       ),
-                    Expanded(
+                    Flexible(
+                      fit: FlexFit.loose,
                       child: AnimatedList(
                         shrinkWrap: true,
                         key: savedDurations.listKey,
