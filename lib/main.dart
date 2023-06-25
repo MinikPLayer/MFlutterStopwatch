@@ -107,6 +107,8 @@ class ListModel<T> {
   }
 }
 
+enum StopwatchState { stopped, running, paused }
+
 class _MyHomePageState extends State<MyHomePage>
     with SingleTickerProviderStateMixin {
   var stopwatch = Stopwatch();
@@ -117,7 +119,7 @@ class _MyHomePageState extends State<MyHomePage>
   AnimationController? _animationController;
   Animation? _animation;
 
-  int currentState = 0;
+  StopwatchState currentState = StopwatchState.stopped;
 
   String _printDuration(Duration duration) {
     String twoDigits(int n, int v) => v.toString().padLeft(n, "0");
@@ -153,21 +155,21 @@ class _MyHomePageState extends State<MyHomePage>
         duration: animationDuration * 0.75);
   }
 
-  int getCurrentState() {
+  StopwatchState getCurrentState() {
     if (!stopwatch.isRunning) {
       if (stopwatch.elapsedTicks == 0) {
-        return 0;
+        return StopwatchState.stopped;
       } else {
-        return 1;
+        return StopwatchState.paused;
       }
     } else {
-      return 2;
+      return StopwatchState.running;
     }
   }
 
   List<Widget> getActions() {
     switch (currentState) {
-      case 0:
+      case StopwatchState.stopped:
         return [
           ElevatedButton.icon(
             onPressed: () {
@@ -183,7 +185,7 @@ class _MyHomePageState extends State<MyHomePage>
           ),
         ];
 
-      case 1:
+      case StopwatchState.paused:
         return [
           ElevatedButton.icon(
             onPressed: () async {
@@ -215,7 +217,7 @@ class _MyHomePageState extends State<MyHomePage>
           ),
         ];
 
-      case 2:
+      case StopwatchState.running:
         return [
           ElevatedButton.icon(
             onPressed: () {
