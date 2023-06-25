@@ -331,36 +331,32 @@ class _MyHomePageState extends State<MyHomePage>
               flex: (_animationController!.value * 200).toInt(),
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      if (_animationController!.value > 0)
-                        SizedBox(
-                          width: 200,
-                          child: Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Lap',
-                                    style:
-                                        Theme.of(context).textTheme.bodyMedium,
-                                  ),
-                                  Text(
-                                    'Time',
-                                    style:
-                                        Theme.of(context).textTheme.bodyMedium,
-                                  ),
-                                ],
-                              ),
-                              const Divider(),
-                            ],
-                          ),
+                child: Column(
+                  children: [
+                    if (_animationController!.value > 0)
+                      SizedBox(
+                        width: 200,
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Lap',
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                                Text(
+                                  'Time',
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                              ],
+                            ),
+                            const Divider(),
+                          ],
                         ),
-                      AnimatedList(
-                        physics: const NeverScrollableScrollPhysics(),
+                      ),
+                    Expanded(
+                      child: AnimatedList(
                         shrinkWrap: true,
                         key: savedDurations.listKey,
                         itemBuilder: (context, index, animation) {
@@ -369,8 +365,8 @@ class _MyHomePageState extends State<MyHomePage>
                               context, item, animation);
                         },
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
